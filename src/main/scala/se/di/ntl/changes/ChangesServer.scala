@@ -2,6 +2,7 @@ package se.di.ntl.changes
 
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
+import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
 import org.slf4j.bridge.SLF4JBridgeHandler
 
@@ -10,9 +11,18 @@ object ChangesServer extends App {
   SLF4JBridgeHandler.removeHandlersForRootLogger()
   SLF4JBridgeHandler.install()
 
-  lazy val system = ActorSystem("change-tracker")
+  val config = ConfigFactory.load(Application.environment + ".conf")
+  val changesConfig = new DefaultChangesConfig(config)
+
+  lazy val system = ActorSystem("changes", config)
 
   val log = LoggerFactory.getLogger(getClass)
+
+  log.info("Applying database migrations...")
+  val flyway = new Flyway
+  flyway.setDataSource(changesConfig.dbUrl, changesConfig.dbUser, changesConfig.dbPassword)
+  val migrations = flyway.migrate()
+  log.info(s"Done migrating db. Applied $migrations migrations.")
 
   val serverDescription =
     s"""
@@ -22,12 +32,7 @@ object ChangesServer extends App {
 
   log.info("Starting: " + serverDescription)
 
-  val config = ConfigFactory.load(Application.environment + ".conf")
-  val changesConfig = new DefaultChangesConfig(config)
-  val actorSystem = ActorSystem("changes", config)
-
   sys.addShutdownHook {
     log.warn("Shutting down: " + serverDescription)
   }
-
 }

@@ -16,6 +16,10 @@ trait ChangesConfig {
   def apiHost: String
   def apiPort: Int
   def apiProtocol: String
+
+  def dbUrl: String
+  def dbUser: String
+  def dbPassword: String
 }
 
 class DefaultChangesConfig(c: Config) extends ChangesConfig {
@@ -30,4 +34,8 @@ class DefaultChangesConfig(c: Config) extends ChangesConfig {
   override val apiHost: String = c.getString("api.host")
   override val apiPort: Int = Try(c.getInt("api.port")).getOrElse(80)
   override val apiProtocol: String = c.getString("api.protocol")
+
+  override val dbUrl: String = c.getString("db.url")
+  override val dbUser: String = c.getString("db.user")
+  override val dbPassword: String = c.getString("db.password")
 }
